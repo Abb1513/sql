@@ -3,7 +3,7 @@ app:
 
 datasource:
   driverName: mysql
-  host: 120.77.210.151
+  host: 127.0.0.1
   port: 3306
   database: sqlcheck
   username: root
@@ -11,9 +11,9 @@ datasource:
   charset: utf8mb4
 
 goinception:
-  host: 120.77.210.151
+  host: 127.0.0.1
   port: 4000
-  rollbakdb_host: 120.77.210.151
+  rollbakdb_host: 127.0.0.1
   rollbakdb_port: 3306
   rollbakdb_passwd: q10010
   rollbakdb_user: root
