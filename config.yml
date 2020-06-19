@@ -1,0 +1,19 @@
+app:
+  port: 8888
+
+datasource:
+  driverName: mysql
+  host: 120.77.210.151
+  port: 3306
+  database: sqlcheck
+  username: root
+  password: q10010
+  charset: utf8mb4
+
+goinception:
+  host: 120.77.210.151
+  port: 4000
+  rollbakdb_host: 120.77.210.151
+  rollbakdb_port: 3306
+  rollbakdb_passwd: q10010
+  rollbakdb_user: root
