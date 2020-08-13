@@ -29,6 +29,7 @@ func initConfig() {
 }
 
 func main() {
+	// gin.SetMode(gin.ReleaseMode)
 	initConfig()
 	utools.InitGoinception()
 	model.InitMysql()

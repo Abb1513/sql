@@ -10,14 +10,25 @@ package router
 import (
 	"github.com/gin-gonic/gin"
 	"goinception/controller"
+	"goinception/middleware"
 )
 
 func Router(r *gin.Engine) {
-	r.POST("/api/dbuser/", controller.CreateDbuser)
-	r.GET("/api/dbuser/", controller.GetAllDbUser)
-	r.POST("/api/deletedbuser/", controller.DeleteDbUser)
-	r.POST("/api/updatedbuser/", controller.UpdateDbUser)
-	r.POST("/api/execute/", controller.Execute)
-	r.POST("/api/executerollsql/", controller.ExecuteRollSql)
-	r.GET("/api/execute/", controller.ExecuteGetAll)
+	r.Use(middleware.CORSMiddleware())
+
+	// SQL 操作
+	db := r.Group("/api/db")
+	db.Use(middleware.AuthMiddleware())
+	db.POST("/dbuser/", controller.CreateDbuser)
+	db.GET("/dbuser/", controller.GetAllDbUser)
+	//	r.POST("/api/deletedbuser/", controller.DeleteDbUser)
+	db.POST("/updatedbuser/", controller.UpdateDbUser)
+	db.POST("/execute/", controller.Execute)
+	db.POST("/executerollsql/", controller.ExecuteRollSql)
+	db.GET("/execute/", controller.ExecuteGetAll)
+
+	// 用户相关
+	users := r.Group("/api/user")
+	users.POST("/login/", controller.UserLogin)
+	users.POST("/register/", controller.UserRegister)
 }

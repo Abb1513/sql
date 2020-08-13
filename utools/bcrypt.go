@@ -14,20 +14,20 @@ import (
 
 // encrypt and decode
 // 加密用户密码
-func EncryptUserPassword(password string) []byte {
+func EncryptUserPassword(password string) ([]byte, error) {
 	hasePassowrd, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-
+		return nil, err
 	}
-	return hasePassowrd
+	return hasePassowrd, nil
 }
 
 // 解密用户密码
-func DecodeUserPassword(password string) bool {
-	if err := bcrypt.CompareHashAndPassword([]byte(password), []byte(password)); err != nil {
-		return false
+func DecodeUserPassword(password string, verifyPasswd string) (bool, error) {
+	if err := bcrypt.CompareHashAndPassword([]byte(password), []byte(verifyPasswd)); err != nil {
+		return false, err
 	}
-	return true
+	return true, nil
 }
 
 // db 的密码

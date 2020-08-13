@@ -8,8 +8,8 @@
 package controller
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
+	log "goinception/logs"
 	"goinception/model"
 	"goinception/response"
 	"goinception/utools"
@@ -20,18 +20,24 @@ type execute struct {
 	ID  int    `json:"id"`
 }
 
+// @Summary 执行sql
+// @Security ApiKeyAuth
+// @accept application/json
+// @Produce application/json
+// @Param data body execute
+// @Success 200 {string} string "{"httpStatus":200,"data":{},"msg":"succeed"}"
+// @Router /api/execute/ [post]
 func Execute(ctx *gin.Context) {
 	var d execute
 	var reslut []model.ResultMessage
 	err := ctx.ShouldBindJSON(&d)
+	log.Log.Infoln("Execute入参, ", d)
 	if err != nil {
 		response.Response(ctx, 200, nil, err)
 		return
 	}
-	fmt.Println(d)
 	var tmp model.DbInfo
 	model.DB.First(&tmp, d.ID)
-	fmt.Println(tmp)
 	res := utools.Exec(tmp, d.SQL)
 	for _, i := range res {
 		if i.ErrorMessage != "" {
@@ -47,10 +53,18 @@ func Execute(ctx *gin.Context) {
 	response.Response(ctx, 200, reslut, "succeed")
 }
 
+// @Summary 执行回滚sql语句
+// @Security ApiKeyAuth
+// @accept application/json
+// @Produce application/json
+// @Param data body model.ResultMessage
+// @Success 200 {string} string "{"httpStatus":200,"data":{},"msg":"succeed"}"
+// @Router /api/executerollsql/ [post]
 func ExecuteRollSql(ctx *gin.Context) {
 	var res model.ResultMessage
 	var dbinfo model.DbInfo
 	err := ctx.ShouldBindJSON(&res)
+	log.Log.Infoln("ExecuteRollSql入参, ", res)
 	if err != nil {
 		response.Response(ctx, 200, "Json解析失败", err)
 		return
@@ -64,10 +78,16 @@ func ExecuteRollSql(ctx *gin.Context) {
 		}
 	}
 	res.IsExcuteRollsql = true
-	model.DB.Model(&res).Update("name", "hello")
+	model.DB.Model(&model.ResultMessage{}).Updates(&res)
 	response.Response(ctx, 200, "执行回滚Sql成功", "succeed")
 }
 
+// @Summary 获取所有执行历史
+// @Security ApiKeyAuth
+// @accept application/json
+// @Produce application/json
+// @Success 200 {string} string "{"httpStatus":200,"data":{},"msg":"succeed"}"
+// @Router /api/execute/ [get]
 func ExecuteGetAll(ctx *gin.Context) {
 	var resList []model.ResultMessage
 	model.DB.Find(&resList)

@@ -3,11 +3,10 @@ package utools
 import (
 	"database/sql"
 	"fmt"
-	"goinception/model"
-	"log"
-
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/spf13/viper"
+	"goinception/logs"
+	"goinception/model"
 )
 
 var goinceptionHost, goinceptionPort, rollbakdb_host, rollbakdb_port, rollbakdb_passwd, rollbakdb_user string
@@ -40,7 +39,7 @@ func Exec(dbinfo model.DbInfo, sqll string) []model.ResultMessage {
 	//inception_magic_commit;`, time.Now().String(), time.Now().Format("2006-01-02 15:04:05"))
 	rows, err := db.Query(sql)
 	if err != nil {
-		log.Fatal(err)
+		logs.Log.Errorf("Goinception执行SQL失败, %s", err)
 	}
 	defer rows.Close()
 	var resultList []model.ResultMessage
@@ -48,7 +47,7 @@ func Exec(dbinfo model.DbInfo, sqll string) []model.ResultMessage {
 		var orderId, affectedRows, stage, errorLevel, stageStatus, errorMessage, sql, sequence, backupDbname, executeTime, sqlsha1, backupTime []uint8
 		err = rows.Scan(&orderId, &stage, &errorLevel, &stageStatus, &errorMessage, &sql, &affectedRows, &sequence, &backupDbname, &executeTime, &sqlsha1, &backupTime)
 		if err != nil {
-			fmt.Println("scan, ", err)
+			logs.Log.Errorln("Goinception 获取scan失败, ", err)
 		}
 		resultmessage := model.ResultMessage{
 			Stage:        string(stage),
@@ -69,8 +68,6 @@ func Exec(dbinfo model.DbInfo, sqll string) []model.ResultMessage {
 		}
 		if string(orderId) != "1" {
 			resultList = append(resultList, resultmessage)
-			//
-			// fmt.Printf("执行ID: %s\n 影响行数: %s\n 执行操作: %s\n  错误等级: %s\n 操作状态:%s\n 错误信息: %s\n 执行SQL: %s\n Opit_time: %s\n 备份库名:%s\n 执行时间:%s\n", string(orderId), string(affectedRows), string(stage), string(errorLevel), string(stageStatus), string(errorMessage), string(sql), string(sequence), string(backupDbname), string(executeTime))
 		}
 	}
 	return resultList
@@ -82,12 +79,12 @@ func GetRollSql(bakdb, optime string) string {
 	db, _ := sql.Open("mysql", mysqlurl)
 	err := db.Ping()
 	if err != nil {
-		fmt.Println("client, ", err)
+		logs.Log.Errorln("连接备份库失败, ", err)
 	}
 	selectTablename := fmt.Sprintf("select tablename from $_$Inception_backup_information$_$ where opid_time='%s'", optime)
 	rows, err := db.Query(selectTablename)
 	if err != nil {
-		fmt.Println("from 89", err)
+		logs.Log.Errorf("%s 执行查找回滚语句失败, %s", optime, err)
 	}
 	var tablename string
 	for rows.Next() {
@@ -105,7 +102,7 @@ func GetRollSql(bakdb, optime string) string {
 	for rows.Next() {
 		err = rows.Scan(&baksql)
 		if err != nil {
-			fmt.Println("from 107 ", err)
+			logs.Log.Errorf("%s,获取回滚语句失败, %s", sql, err)
 		}
 	}
 	return baksql
@@ -115,6 +112,9 @@ func GetRollSql(bakdb, optime string) string {
 func ExcuteRollBak(res model.ResultMessage, tmp model.DbInfo) error {
 	mysqlurl := fmt.Sprintf("%s:%s@tcp(%s:%s)/", tmp.DbUser, DecodeDbPasswd(tmp.DbPassword), tmp.DbHost, tmp.DbPort)
 	db, _ := sql.Open("mysql", mysqlurl)
+	if err := db.Ping(); err != nil {
+		logs.Log.Error("执行回滚失败, ", res, err)
+	}
 	_, err := db.Query(res.Rollsql)
 	if err != nil {
 		return err

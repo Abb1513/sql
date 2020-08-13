@@ -12,6 +12,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
 	"github.com/spf13/viper"
+	log "goinception/logs"
 )
 
 // var DB *xorm.Engine
@@ -36,33 +37,13 @@ func InitMysql() {
 	db, err := gorm.Open("mysql", args)
 	db.LogMode(true)
 	if err != nil {
-		panic("fail to connect databse,err:" + err.Error())
+		log.Log.Errorln("fail to connect databse,err:" + err.Error())
 	}
 	db.SingularTable(true)
 	db.AutoMigrate(&DbInfo{})
 	db.AutoMigrate(&ResultMessage{})
+	db.AutoMigrate(&Users{})
 	DB = db
 }
 
-//func InitMysql()  {
-//	host := viper.GetString("datasource.host")
-//	port := viper.GetString("datasource.port")
-//	database := viper.GetString("datasource.database")
-//	username := viper.GetString("datasource.username")
-//	password := viper.GetString("datasource.password")
-//	charset := viper.GetString("datasource.charset")
-//	args := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=%s&parseTime=true",
-//		username,
-//		password,
-//		host,
-//		port,
-//		database,
-//		charset)
-//	db, err := xorm.NewEngine("mysql", args)
-//	if err !=nil {
-//		panic("db client faild: "+ err.Error())
-//	}
-//	db.ShowSQL(true)
-//	db.Sync2(new(DbInfo))
-//	DB = db
-//}
+//初始化 root 用户
